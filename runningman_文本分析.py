@@ -1,7 +1,6 @@
 import pandas
 import time
 import jieba
-
 from snownlp import SnowNLP
 from datetime import datetime
 import matplotlib
@@ -13,7 +12,6 @@ import plotly.plotly
 import plotly.graph_objs as go
 import numpy as np
 import networkx as nx
-import json
 import seaborn
 import matplotlib.pyplot as pyl
 import numpy
@@ -54,21 +52,7 @@ def read_data(filepath):
         hour.append(i[9])
         day.append(i[8])
     return com,day,hour,floor,zan,sex,name,level,reply,week
-def ana_day(day):
-    d=[ '2018-05-10 ', '2018-06-27 ', '2018-09-27 ', '2018-06-12 ', '2018-06-23 ']
-    print(d.sort())
-    for i in range(len(day)):
-        if type(day[i])=='float':
-            print(day[i])
-    print(set(day))
-    output_file('week_bar.html')
-    for i in sorted(set(day)):
-        x = []
-        x.append(i)
-        x.append(day.count(i))
-        z.append(x)
-    print(r)
-    print(z)
+#日评论时间
 def ana_hour(hour):
     h,k=[],[]
     for i in range(len(hour)):
@@ -81,6 +65,21 @@ def ana_hour(hour):
     p = figure(plot_width=400,title='各小时评论数', plot_height=400)
     p.line(sorted(set(h)), k, line_width=2)
     p.circle(sorted(set(h)), k, fill_color="white", size=8)
+    show(p)
+#周评论
+def ana_week(week):
+    weeks=['星期天','星期一','星期二','星期三','星期四','星期五','星期六']
+    output_file('week_bar.html')
+    count=[]
+    for i in sorted(set(week)):
+        if not numpy.isnan(i):
+            count.append(week.count(i))
+    source = ColumnDataSource(data=dict(weeks=weeks, counts=count,color=['orange','yellowgreen','pink','darksalmon','lightgreen','paleturquoise','lightsteelblue']))
+    p=figure(x_range=weeks, y_range=(0,4000), plot_height=250, title="Week Counts",
+           toolbar_location=None, tools="")
+    p.vbar(x='weeks', top='counts', color='color',width=0.9, legend="Week", source=source)
+    p.legend.orientation = "horizontal"
+    p.legend.location = "top_right"
     show(p)
 def write_data(filepath):
     df=pandas.DataFrame()
@@ -108,6 +107,7 @@ def write_data(filepath):
             r[10] = ''
         df=df.append(r,ignore_index=True)
     df.to_csv('running.csv', index=False, mode='a', header=False,encoding='utf-8')
+#话题度排行
 def hot(com):
     #print(com)
     output_file('各成员话题度.html')
@@ -148,6 +148,7 @@ def hot(com):
     p.legend.orientation = "horizontal"
     #p.legend.location = "top_right"
     show(p)
+#评论字数和赞的关系
 def com_zan(com,zan):
     #print(len(zan))
     #print(len(com))
@@ -171,6 +172,7 @@ def com_zan(com,zan):
     fig = go.Figure(data=data, layout=layout)
     plotly.offline.plot(data)
     print(e)
+#词云图
 def comment(com):
     df=pandas.DataFrame()
     pl=[]
@@ -192,24 +194,10 @@ def comment(com):
                 print(x)
                 df=df.append(x,ignore_index=True)
                 #print(df)
-                '''
-                x=[]
-                x.append(s)
-                x.append(pl.count(s))
-                word.append(x)
-    word=sorted(word,key=lambda i:i[1],reverse=True)
-    
-    word=[('弹幕', 1479), ('真的', 1086), ('什么', 827)]
-    print(type(word))
-    word=json.loads(word)
-    print(word)
-    #pf=pandas.DataFrame()
-    #pf = pf.append(word,ignore_index=True)
-    pf=pandas.DataFrame.from_dict(word)'''
     print(df)
     df.to_csv('1.csv',encoding='utf-8',index=False, mode='a', header=False)
     print(df)
-    #return word
+#情感分析
 def snownlp(com):
     q=[]
     for i in com:
@@ -233,6 +221,7 @@ def snownlp(com):
     p.vbar(x='emotion', top='counts', width=0.9, source=source)
     p.legend.orientation = "horizontal"
     show(p)
+#成员的相关系数矩阵
 def network_edg_csv(com):
     df=pandas.DataFrame(columns=['池石镇','刘在石','宋智孝','李光洙','金钟国','gary','haha','全昭敏','梁世赞'],index=['池石镇','刘在石','宋智孝','李光洙','金钟国','gary','haha','全昭敏','梁世赞'])
     df.loc[:,:]=0.0
@@ -398,6 +387,7 @@ def network_edg_csv(com):
     dc.to_csv('run_edge.csv',encoding='utf-8')
     large=()'''
 #print(df)
+#网络分析
 def network():
     data=pandas.read_csv('run_edge.csv',encoding='utf-8',engine='python')
     #print(data)
@@ -424,6 +414,7 @@ def network():
     pyl.axis('off')
     pyl.show()
 from pyecharts import Geo,Bar,Pie,Line,Radar
+#男女比例
 def male(sex):
     att=['男','女','保密']
     val=[]
@@ -435,21 +426,16 @@ def male(sex):
             is_more_utils=True, legend_pos='left')
     pie.render("sexPie.html")
     print(count)
-#2.做一个词云
 filepath='running.csv'
 #write_data(filepath)
 com,day,hour,floor,zan,sex,name,level,reply,week=read_data(filepath)#1代表星期一0代表星期天
-snownlp(com)
 '''
 #snownlp(com)#做情感分析
 #network_edg_csv(com)#做相关系数矩阵
 #network()#做社交网络图
 #ana_week(week)
-#ana_day(day)
 #ana_hour(hour)
 #hot(com)#话题度排行
 #com_zan(com,zan)#评论和赞的关系
-day(day)
-comment(com)#出词云图
-#print(pl)
+#comment(com)#出词云图
 #'''
